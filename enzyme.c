@@ -17,6 +17,15 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
+	thread_info_t* info = data;
+	info->swapcount = 0;
+	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS);
+	char* str = info->string;
+	if(str[0] == "C") {
+		pthread_cancel(info);
+		return NULL;
+	}
+
 	while(0) {
 		sched_yield();
 	};
@@ -41,7 +50,7 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 			i,strerror(rv));
 		exit(1);
 	    }
-	}  
+	}
 	return len-1;
 }
 
@@ -53,7 +62,7 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 int join_on_enzymes(pthread_t *threads, int n) {
 	int i;
 	int totalswapcount = 0;
-	int whatgoeshere=0; // just to make the code compile 
+	int whatgoeshere=0; // just to make the code compile
 	                    // you will need to edit the code below
 	for(i=0;i<n;i++) {
 	    void *status;
@@ -70,12 +79,12 @@ int join_on_enzymes(pthread_t *threads, int n) {
 	    printf("Thread %d did not return anything\n",i);
 	    } else {
 	      printf("Thread %d exited normally: ",i);// Don't change this line
-	      int threadswapcount = whatgoeshere; 
+	      int threadswapcount = whatgoeshere;
 	      // Hint - you will need to cast something.
 	      printf("%d swaps.\n",threadswapcount); // Don't change this line
 	      totalswapcount += threadswapcount;// Don't change this line
 	    }
-	}	
+	}
 	return totalswapcount;
 }
 
@@ -87,7 +96,7 @@ void wait_till_done(char *string, int n) {
 	while(1) {
 	    sched_yield();
 	    workperformed=0;
-	    for(i=0;i<n;i++) 
+	    for(i=0;i<n;i++)
 	        if (string[i] > string[i+1]) {
 	            workperformed=1;
 	    	}
@@ -96,8 +105,8 @@ void wait_till_done(char *string, int n) {
 }
 
 void * sleeper_func(void *p) {
-	sleep( (int) p); 
-	// Actually this may return before p seconds because of signals. 
+	sleep( (int) p);
+	// Actually this may return before p seconds because of signals.
 	// See man sleep for more information
 	printf("sleeper func woke up - exiting the program\n");
 	exit(1);
@@ -116,11 +125,11 @@ int smp2_main(int argc, char **argv) {
 
 	please_quit = 0;
 	use_yield =1;
-	
+
 	printf("Creating threads...\n");
 	n = make_enzyme_threads(enzymes,string,run_enzyme);
 	printf("Done creating %d threads.\n",n);
-	
+
 	pthread_t sleeperid;
 	pthread_create(&sleeperid,NULL,sleeper_func,(void*)5);
 
@@ -130,7 +139,7 @@ int smp2_main(int argc, char **argv) {
 	totalswap = join_on_enzymes(enzymes, n);
 	printf("Total: %d swaps\n",totalswap);
 	printf("Sorted string: %s\n",string);
-	
+
 	exit(0);
 }
 

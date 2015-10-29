@@ -1,4 +1,5 @@
 #include "enzyme.h"
+#include <pthread.h>
 
 int please_quit;
 int use_yield;
@@ -17,17 +18,16 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
-	thread_info_t* info = data;
+	thread_info_t* info = (thread_info_t *) data;
 	info->swapcount = 0;
 	int oldstate;
 	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
 	char* str = info->string;
 	if(str[0] == 'C') {
 		pthread_cancel(pthread_self());
-		return NULL;
 	}
 
-	while(please_quit != 0) {
+	while(!please_quit) {
 		if(str[0] > str[1]) {
 			workperformed = 1;
 			info->swapcount++;
@@ -38,8 +38,8 @@ void *run_enzyme(void *data) {
 		if(use_yield != 0) {
 			sched_yield();
 		}
-	};
-	return info;
+	}
+	return (void *)info;
 }
 
 
@@ -52,7 +52,7 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 	len = strlen(string);
 
 	for(i=0;i<len-1;i++) {
-		info = (thread_info_t *)malloc(sizeof(thread_info_t));
+ 	    info = (thread_info_t *)malloc(sizeof(thread_info_t));
 	    info->string = string+i;
 	    rv = pthread_create(enzymes+i,NULL,fp,info);
 	    if (rv) {
@@ -64,35 +64,32 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 }
 
 
-
-
 // Join all threads at the end.
 // Returns the total number of swaps.
 int join_on_enzymes(pthread_t *threads, int n) {
-	printf("joinin' dem enzymes");
 	int i;
 	int totalswapcount = 0;
-	//int whatgoeshere=0; // just to make the code compile
-	                    // you will need to edit the code below
+	int cancelcount = 0;
 	for(i=0;i<n;i++) {
 	    void *status;
 	    int rv = pthread_join(threads[i],&status);
 
-        if(rv) {
+        if(rv != 0) {
 			fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
 			continue;
 		}
 
 		if (status == PTHREAD_CANCELED) {
+			cancelcount++;
 			continue;
 		} else if (status == NULL) {
 			printf("Thread %d did not return anything\n",i);
 		} else {
 			  printf("Thread %d exited normally: ",i);// Don't change this line
-			  int threadswapcount = (int)status;
-			  // Hint - you will need to cast something.
-			  printf("%d swaps.\n",threadswapcount); // Don't change this line
-			  totalswapcount += threadswapcount;// Don't change this line
+			  //int threadswapcount = (int)status;
+			  thread_info_t *info = (thread_info_t *) status;
+			  printf("%d swaps.\n", info->swapcount); // Don't change this line
+			  totalswapcount += info->swapcount;// Don't change this line
 	    }
 	}
 	return totalswapcount;

@@ -18,11 +18,11 @@ void *run_enzyme(void *data) {
 		If "use_yield" is nonzero then call pthread_yield at the end of the loop.
 	7. Return a pointer to the updated structure.
 	*/
-	thread_info_t* info = (thread_info_t *) data;
+	thread_info_t *info = (thread_info_t *) data;
 	info->swapcount = 0;
 	int oldstate;
-	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
-	char* str = info->string;
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
+	char *str = info->string;
 	if(str[0] == 'C') {
 		pthread_cancel(pthread_self());
 	}
@@ -35,9 +35,7 @@ void *run_enzyme(void *data) {
 			str[1] = str[0];
 			str[0] = tmp;
 		}
-		if(use_yield != 0) {
-			sched_yield();
-		}
+		sched_yield();
 	}
 	return (void *)info;
 }
@@ -50,14 +48,13 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 	int i,rv,len;
 	thread_info_t *info;
 	len = strlen(string);
-
 	for(i=0;i<len-1;i++) {
  	    info = (thread_info_t *)malloc(sizeof(thread_info_t));
 	    info->string = string+i;
 	    rv = pthread_create(enzymes+i,NULL,fp,info);
 	    if (rv) {
-	        fprintf(stderr,"Could not create thread %d : %s\n",	i);
-			exit(1);
+	        fprintf(stderr,"Could not create thread %d.\n",i);
+		exit(1);
 	    }
 	}
 	return len-1;
@@ -75,7 +72,7 @@ int join_on_enzymes(pthread_t *threads, int n) {
 	    int rv = pthread_join(threads[i],&status);
 
         if(rv != 0) {
-			fprintf(stderr,"Can't join thread %d:%s.\n",i, strerror(rv));
+			fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
 			continue;
 		}
 
@@ -86,7 +83,6 @@ int join_on_enzymes(pthread_t *threads, int n) {
 			printf("Thread %d did not return anything\n",i);
 		} else {
 			  printf("Thread %d exited normally: ",i);// Don't change this line
-			  //int threadswapcount = (int)status;
 			  thread_info_t *info = (thread_info_t *) status;
 			  printf("%d swaps.\n", info->swapcount); // Don't change this line
 			  totalswapcount += info->swapcount;// Don't change this line

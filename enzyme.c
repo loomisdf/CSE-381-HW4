@@ -21,7 +21,7 @@ void *run_enzyme(void *data) {
 	thread_info_t* info = (thread_info_t *) data;
 	info->swapcount = 0;
 	int oldstate;
-	pthread_setcancelstate(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldstate);
 	char* str = info->string;
 	if(str[0] == 'C') {
 		pthread_cancel(pthread_self());
@@ -56,7 +56,7 @@ int make_enzyme_threads(pthread_t * enzymes, char *string, void *(*fp)(void *)) 
 	    info->string = string+i;
 	    rv = pthread_create(enzymes+i,NULL,fp,info);
 	    if (rv) {
-	        fprintf(stderr,"Could not create thread %d : %s\n",	i, strerror(rv));
+	        fprintf(stderr,"Could not create thread %d : %s\n",	i);
 			exit(1);
 	    }
 	}
@@ -75,7 +75,7 @@ int join_on_enzymes(pthread_t *threads, int n) {
 	    int rv = pthread_join(threads[i],&status);
 
         if(rv != 0) {
-			fprintf(stderr,"Can't join thread %d:%s.\n",i,strerror(rv));
+			fprintf(stderr,"Can't join thread %d:%s.\n",i, strerror(rv));
 			continue;
 		}
 

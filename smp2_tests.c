@@ -146,6 +146,7 @@ int test_swap_count_workperformed1(int argc, char**argv) {
 	pthread_t tid;
 	pthread_create(&tid, NULL,run_enzyme,&data );
 	sched_yield();
+	sleep(1);
 	please_quit=1;
 	void * result;
 	int r=pthread_join(tid, &result);
@@ -162,6 +163,7 @@ int test_swap_count_workperformed2(int argc, char**argv) {
 	pthread_t tid;
 	pthread_create(&tid, NULL,run_enzyme,&data );
 	sched_yield();
+	sleep(1);
 	please_quit=1;
 	void * result;
 	int r=pthread_join(tid, &result);

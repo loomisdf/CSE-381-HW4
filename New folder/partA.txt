@@ -1,5 +1,0 @@
-1. Processes would be difficult to use this because they do not share memory space. You have to worry about multiple issues including deadlock if you were to use processes, whereas you do not have to worry about these things when using threads. 
-
-2. Workperformed is significant because it stops threads from executing when a swap is occuring so that the string is not sorted out of order.
-
-3. 'fp' is a function pointer that points to a function. The (void*) is the parameter that is given to the function. 
